@@ -1,15 +1,15 @@
-import {BasicREPL} from './repl';
+import { BasicREPL } from './repl';
 import { Type, Value } from './ast';
 import { defaultTypeEnv } from './type-check';
 import { NUM, BOOL, NONE } from './utils';
-import {open, read, write, close, seek} from './IO_File/FileSystem';
+import { open, read, write, close, seek, setMemory } from './IO_File/FileSystem';
 
-function stringify(typ: Type, arg: any) : string {
-  switch(typ.tag) {
+function stringify(typ: Type, arg: any): string {
+  switch (typ.tag) {
     case "number":
       return (arg as number).toString();
     case "bool":
-      return (arg as boolean)? "True" : "False";
+      return (arg as boolean) ? "True" : "False";
     case "none":
       return "None";
     case "class":
@@ -17,7 +17,7 @@ function stringify(typ: Type, arg: any) : string {
   }
 }
 
-function print(typ: Type, arg : number) : any {
+function print(typ: Type, arg: number): any {
   console.log("Logging from WASM: ", arg);
   const elt = document.createElement("pre");
   document.getElementById("output").appendChild(elt);
@@ -25,21 +25,22 @@ function print(typ: Type, arg : number) : any {
   return arg;
 }
 
-function assert_not_none(arg: any) : any {
+function assert_not_none(arg: any): any {
   if (arg === 0)
     throw new Error("RUNTIME ERROR: cannot perform operation on none");
   return arg;
 }
 
 function webStart() {
-  document.addEventListener("DOMContentLoaded", async function() {
+  document.addEventListener("DOMContentLoaded", async function () {
 
     // https://github.com/mdn/webassembly-examples/issues/5
 
-    const memory = new WebAssembly.Memory({initial:10, maximum:100});
-    const memoryModule = await fetch('memory.wasm').then(response => 
+    const memory = new WebAssembly.Memory({ initial: 10, maximum: 100 });
+    setMemory(memory);
+    const memoryModule = await fetch('memory.wasm').then(response =>
       response.arrayBuffer()
-    ).then(bytes => 
+    ).then(bytes =>
       WebAssembly.instantiate(bytes, { js: { mem: memory } })
     );
 
@@ -53,20 +54,20 @@ function webStart() {
         min: Math.min,
         max: Math.max,
         pow: Math.pow,
-        buildin_open:  open,
-        buildin_read:  read,
+        buildin_open: open,
+        buildin_read: read,
         buildin_write: write,
         buildin_close: close,
-        buildin_seek:  seek,
+        buildin_seek: seek,
       },
       libmemory: memoryModule.instance.exports,
       memory_values: memory,
-      js: {memory: memory}
+      js: { memory: memory }
     };
     var repl = new BasicREPL(importObject);
 
-    function renderResult(result : Value) : void {
-      if(result === undefined) { console.log("skip"); return; }
+    function renderResult(result: Value): void {
+      if (result === undefined) { console.log("skip"); return; }
       if (result.tag === "none") return;
       const elt = document.createElement("pre");
       document.getElementById("output").appendChild(elt);
@@ -84,7 +85,7 @@ function webStart() {
       }
     }
 
-    function renderError(result : any) : void {
+    function renderError(result: any): void {
       const elt = document.createElement("pre");
       document.getElementById("output").appendChild(elt);
       elt.setAttribute("style", "color: red");
@@ -96,7 +97,7 @@ function webStart() {
       const replCodeElement = document.getElementById("next-code") as HTMLTextAreaElement;
       replCodeElement.addEventListener("keypress", (e) => {
 
-        if(e.shiftKey && e.key === "Enter") {
+        if (e.shiftKey && e.key === "Enter") {
         } else if (e.key === "Enter") {
           e.preventDefault();
           const output = document.createElement("div");
@@ -112,8 +113,8 @@ function webStart() {
           const source = replCodeElement.value;
           elt.value = source;
           replCodeElement.value = "";
-          repl.run(source).then((r) => { renderResult(r); console.log ("run finished") })
-              .catch((e) => { renderError(e); console.log("run failed", e) });;
+          repl.run(source).then((r) => { renderResult(r); console.log("run finished") })
+            .catch((e) => { renderError(e); console.log("run failed", e) });;
         }
       });
     }
@@ -122,12 +123,12 @@ function webStart() {
       document.getElementById("output").innerHTML = "";
     }
 
-    document.getElementById("run").addEventListener("click", function(e) {
+    document.getElementById("run").addEventListener("click", function (e) {
       repl = new BasicREPL(importObject);
       const source = document.getElementById("user-code") as HTMLTextAreaElement;
       resetRepl();
-      repl.run(source.value).then((r) => { renderResult(r); console.log ("run finished") })
-          .catch((e) => { renderError(e); console.log("run failed", e) });;
+      repl.run(source.value).then((r) => { renderResult(r); console.log("run finished") })
+        .catch((e) => { renderError(e); console.log("run failed", e) });;
     });
     setupRepl();
   });

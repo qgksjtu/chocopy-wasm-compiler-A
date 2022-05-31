@@ -2,6 +2,11 @@
  * TypeScript      Side   *
  **************************/
 
+var memory: WebAssembly.Memory;
+
+export function setMemory(m: WebAssembly.Memory) {
+    memory = m;
+}
 
 // What is the type for this open File
 export type OpenFile = {
@@ -35,24 +40,44 @@ export function exportFileBuildinFunc() {
 let fdCounter = 0;
 let fs = new Map<number, OpenFile>(); // track current open files
 
+
+export function modeTranslator(mode: string): number {
+    if (mode === "r") {
+        return FileMode.R_ONLY
+    }
+    else if (mode === "r+") {
+        return FileMode.RW
+    }
+    else if (mode === "w") {
+        return FileMode.W_CURR
+    }
+    else if (mode === "w+") {
+        return FileMode.W_APPEND
+    }
+    return -1
+}
+
+export function readStringFromMemory(address: number): string {
+    return ""
+}
+
 /*
  * TODO Later: The input to open should be some value for string
  * right now pretend that we are creating a file without a fname string
  * 
  * ct: for the mode, we might need to create a 'mode translator' to translate from Python mode to our mode
  */
-export function open(filePathAddr: number, mode: number): number {
-
-    const filePath = `./test${filePathAddr}.txt`;
-
-    // treat as creating a new file for now. Later with string type, we check if the filePathAddr already existed first.
-    if (window.localStorage.getItem(filePath) === null) {
-        window.localStorage.setItem(filePath, JSON.stringify([]));
+export function open(fileNameAddress: number, modeStringAddress: number): number {
+    let fname = readStringFromMemory(fileNameAddress);
+    let mode = readStringFromMemory(modeStringAddress);
+    // check if the file exists, if not create a new one
+    if (window.localStorage.getItem(fname) === null) {
+        window.localStorage.setItem(fname, JSON.stringify([]));
     }
     fs.set(fdCounter++, {
-        filePath: filePath, // a dummy address. If we have string we should read the address
+        filePath: fname, // a dummy address. If we have string we should read the address
         currentPosition: 0,
-        mode: mode, // random mode
+        mode: modeTranslator(mode), // random mode
         fileSize: 0, // according to the current test case we should assign 0
     });
 
