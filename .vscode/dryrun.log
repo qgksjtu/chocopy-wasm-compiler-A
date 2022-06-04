@@ -1,0 +1,6 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/mnt/f/documents/cse 231/chocopy-wasm-compiler-A'
+mkdir -p build/
+npx wat2wasm stdlib/memory.wat -o build/memory.wasm
+make: Leaving directory '/mnt/f/documents/cse 231/chocopy-wasm-compiler-A'
+ 

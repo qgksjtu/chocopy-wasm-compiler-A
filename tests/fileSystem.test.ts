@@ -39,7 +39,7 @@ describe("File System testing", () => {
     f = open(0, 0)
     f.read()
     f.close()`);
-    
+
 
     const s8 = `
     f:File = None
@@ -55,6 +55,53 @@ describe("File System testing", () => {
     f.write(1)
     f.close()`
     assertTC("open/read/write/close/pass type check", s9, { tag: 'none' });
+})
+
+describe("Node FilSystem testing", () => {
+    const nfs1 = `
+    f:File = None
+    f = open(1, 3)
+    f.read(1)
+    f.write(1)
+    f.close()`
+    assertTC("open/read/write/close success in node", nfs1, { tag: 'none' });
+
+    assertPrint("node fs read correct1", `
+    x : int  = 0
+    f:File = None
+    f = open(2, 3)
+    f.write(1)
+    x = f.read(1)
+    f.close()
+    print(x)`, [`1`]);
+
+    assertPrint("node fs read correct2", `
+    x : int  = 0
+    f:File = None
+    f = open(3, 3)
+    f.write(1)
+    f.write(2)
+    x = f.read(1)
+    f.close()
+    print(x)`, [`2`]);
+    assertPrint("node fs write/close/read success", `
+    x : int  = 0
+    f1:File = None
+    f2:File = None
+    f1 = open(4,2)
+    f1.write(1)
+    f1.close()
+    f2 = open(4,1)
+    x = f2.read(1)
+    f2.close()
+    print(x)`, [`1`]);
+
+    assertFail("read EOF", `
+    x : int  = 0
+    f:File = None
+    f = open(5, 1)
+    x = f.read(1)
+    f.close()`);
 })
 /*
 assertPrint("simple read write",
