@@ -63,10 +63,11 @@ describe("Node FilSystem testing", () => {
     f = open(1, 3)
     f.read(1)
     f.write(1)
+    f.seek(1)
     f.close()`
     assertTC("open/read/write/close success in node", nfs1, { tag: 'none' });
 
-    assertPrint("node fs read correct1", `
+    assertPrint("node fs read write correct1", `
     x : int  = 0
     f:File = None
     f = open(2, 3)
@@ -81,9 +82,13 @@ describe("Node FilSystem testing", () => {
     f = open(3, 3)
     f.write(1)
     f.write(2)
+    f.seek(1)
+    x = f.read(1)
+    print(x)
+    f.seek(2)
     x = f.read(1)
     f.close()
-    print(x)`, [`2`]);
+    print(x)`, [`1`, `2`]);
     assertPrint("node fs write/close/read success", `
     x : int  = 0
     f1:File = None
@@ -102,6 +107,38 @@ describe("Node FilSystem testing", () => {
     f = open(5, 1)
     x = f.read(1)
     f.close()`);
+
+    assertPrint("multi-digit", `
+    x : int  = 0
+    f:File = None
+    f = open(6, 3)
+    f.write(123)
+    f.write(45)
+    f.seek(3)
+    x = f.read(2)
+    f.close()
+    print(x)`, [`34`]);
+
+    assertPrint("multi-digit_1", `
+    x : int  = 0
+    f:File = None
+    f = open(7, 3)
+    f.write(123456)
+    f.seek(3)
+    f.write(23)
+    f.seek(3)
+    x = f.read(2)
+    f.close()
+    print(x)`, [`32`]);
+
+    assertFail("seek false position", `
+    x : int  = 0
+    f:File = None
+    f = open(8, 2)
+    f.write(123)
+    f.seek(4)
+    f.close()`);
+
 })
 /*
 assertPrint("simple read write",
