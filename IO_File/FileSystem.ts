@@ -76,7 +76,7 @@ export function open(filePathAddr: number, mode: number): number {
                 filePath: filePath, // a dummy address. If we have string we should read the address
                 currentPosition: data.split('').map(Number).length,
                 mode: mode, // random mode
-                fileSize: 0, // according to the current test case we should assign 0
+                fileSize: data.split('').map(Number).length, // according to the current test case we should assign 0
             });
         }
     }
@@ -86,7 +86,6 @@ export function open(filePathAddr: number, mode: number): number {
 }
 
 export function read(fd: number, numByte: number): number {
-    numByte = 1; // DUMMY VALUE
 
     let file = checkFDExistence(fd);
     if (typeof window !== 'undefined') {
@@ -107,7 +106,7 @@ export function read(fd: number, numByte: number): number {
     } else {
         let nodefs = require('fs');
         let data = nodefs.readFileSync(file.filePath, { encoding: 'utf8', flag: 'r' });
-        console.log(data);
+
         if (!data) {
             throw new Error("RUNTIME ERROR: EOF");
         }
@@ -116,10 +115,14 @@ export function read(fd: number, numByte: number): number {
 
         file.fileSize = dataArray.length;
 
-        if (file.currentPosition > file.fileSize) {
+        if (file.currentPosition + numByte - 1 > file.fileSize) {
             throw new Error("RUNTIME ERROR: EOF");
         }
-        return dataArray[file.currentPosition - 1];
+        var res = 0;
+        dataArray.forEach((d, ind) => {
+            if (ind >= file.currentPosition - 1 && ind < file.currentPosition - 1 + numByte) res = res * 10 + d;
+        });
+        return res;
     }
 
 
@@ -153,7 +156,7 @@ export function write(fd: number, c: number): number {
 
         file.fileSize = dataArray.length;
         window.localStorage.setItem(file.filePath, JSON.stringify(dataArray));
-        return - 1;
+        return 0;
     } else {
         let nodefs = require('fs');
         let data = nodefs.readFileSync(file.filePath, { encoding: 'utf8', flag: 'r' });
@@ -161,23 +164,25 @@ export function write(fd: number, c: number): number {
 
         if (file.mode === FileMode.W_APPEND) {
             dataArray.push(c);
-            file.currentPosition = dataArray.length;
+            file.currentPosition += c.toString().length;
         } else if (file.mode === FileMode.W_CURR || file.mode === FileMode.RW) {
             if (file.currentPosition === dataArray.length) { // append data to the end of the file
                 dataArray.push(c);
-                file.currentPosition = dataArray.length;
+                file.currentPosition += c.toString().length;
             } else {                                        // write data to the currentPosition 
-                dataArray[file.currentPosition] = c;
-                file.currentPosition++;
+                let c_string = c.toString();
+                for (let i = 0; i < c_string.length; i++) {
+                    dataArray[file.currentPosition + i] = +c_string[i];
+                }
+                file.currentPosition += c.toString().length;
             }
         } else {
             throw new Error(`RUNTIME ERROR: Unknown write mode ${file.mode}`);
         }
 
-        file.fileSize = dataArray.length;
-
+        file.fileSize = dataArray.length - 1 + c.toString().length;
         nodefs.writeFileSync(file.filePath, dataArray.join(''));
-        return - 1;
+        return 0;
     }
 }
 
